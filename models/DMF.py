@@ -14,10 +14,10 @@ class DeepMatrixFactorization(BasicModel):
         super().__init__(config)
         self.embedding = torch.FloatTensor(
             np.load(config.embeddingPath, allow_pickle=True)
-        )
+        ).to(self.device)
 
-        self.user_embedding = nn.Embedding.from_pretrained(self.embedding)
-        self.item_embedding = nn.Embedding.from_pretrained(self.embedding.T)
+        # self.user_embedding = nn.Embedding.from_pretrained(embedding)
+        # self.item_embedding = nn.Embedding.from_pretrained(embedding.T)
 
         self.userMLP = MLP(config.userMLP)
         self.itemMLP = MLP(config.itemMLP)
@@ -52,13 +52,23 @@ class DeepMatrixFactorization(BasicModel):
             self.mi_estimator.requires_grad_(False)
 
         for m in self.children():
+            # embedding太大 GPU会out of memory
+            # if isinstance(m, nn.Embedding):
+            #     continue
             m.to(self.device)
+
+    def user_embedding(self, x):
+        return self.embedding[x]
+
+    def item_embedding(self, x):
+        return self.embedding[:, x].T
 
     def getuserEmbedding(self, x):
         userID, userProfile, otherInfo = x
         # user = userID.to(self.device)
         # userProfile = userProfile.to(self.device)
-        userEmbedding = self.userMLP(self.user_embedding(userID))
+        userEmbedding = self.user_embedding(userID)
+        userEmbedding = self.userMLP(userEmbedding)
         if self.useSensitiveFeature:
             userEmbedding = torch.cat([userEmbedding, userProfile], dim=-1)
         # else:
