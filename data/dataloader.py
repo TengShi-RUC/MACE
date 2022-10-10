@@ -17,13 +17,22 @@ class interactDataSet(IterableDataset):
                 dataPath = 'data/ml-1m/interactTrain.npy'
             else:
                 dataPath = 'data/ml-1m/interactTest.npy'
-        else:
+        elif dataSetName == 'insurance':
             userProfileDict = pd.read_csv(
                 "data/insurance/userProfile.csv").drop(columns=['user_id']).values
             if train:
                 dataPath = 'data/insurance/interactTrain.npy'
             else:
                 dataPath = 'data/insurance/interactTest.npy'
+        elif dataSetName == 'rentTheRunWay':
+            userProfileDict = pd.read_csv(
+                "data/rentTheRunWay/userProfile.csv").drop(columns=['user_id']).values
+            if train:
+                dataPath = 'data/rentTheRunWay/interactTrain.npy'
+            else:
+                dataPath = 'data/rentTheRunWay/interactTest.npy'
+        else:
+            raise ValueError("Dataet error")
 
         self.dataSet = np.load(dataPath, allow_pickle=True)
         userProfile = np.take(userProfileDict, self.dataSet[:, 0], axis=0)
