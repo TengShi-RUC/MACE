@@ -54,12 +54,20 @@ class BasicModel(nn.Module):
                 .sort_values(by=["user_id"])
                 .set_index("user_id")
             )
-        else:
+        elif self.dataset == 'insurance':
             self.user_df = (
                 pd.read_csv("data/insurance/userProfile.csv")
                 .sort_values(by=["user_id"])
                 .set_index("user_id")
             )
+        elif self.dataset == 'rentTheRunWay':
+            self.user_df = (
+                pd.read_csv("data/rentTheRunWay/userProfile.csv")
+                .sort_values(by=["user_id"])
+                .set_index("user_id")
+            )
+        else:
+            raise ValueError("Dataset error")
         self.user_df = self.user_df.astype("category")
         self.userProfileDict = self.user_df.values
 
@@ -71,10 +79,24 @@ class BasicModel(nn.Module):
         print("groupFeature:{} index:{}".format(
             self.groupFeature, self.featureIndex))
 
-        self.allDistribution, self.featureValueList = self.getAllDistribution()
+        self.d_num = config.d_num
+
+        self.allDistribution, self.featureValueList = self.getAllDistribution(
+            d_num=self.d_num)
         self.testDistribution, self.infoDict = self.getTestDistribution()
 
-        self.distribution_weight = [0.08, 0.08, 0.08, 0.08, 0.08, 0.6]
+        numDistribution = self.allDistribution.size()[1]
+        #self.distribution_weight = [0.08, 0.08, 0.08, 0.08, 0.08, 0.6]
+        # self.distribution_weight = np.ones(
+        #     (numDistribution,)) / (numDistribution * 1.0)
+        if numDistribution == 1:
+            self.distribution_weight = [1]
+        else:
+            self.distribution_weight = np.zeros((numDistribution,))
+            init_weight = config.initWeight
+            self.distribution_weight[0] = init_weight
+            self.distribution_weight[1:] = (
+                1 - init_weight) / (numDistribution - 1)
         print("distribution_weight:{}".format(self.distribution_weight))
 
         self.analysis = config.analysis
@@ -92,15 +114,19 @@ class BasicModel(nn.Module):
         """
             save model
         """
-        torch.save(self.state_dict(), "%s%s.pth" % (model_save_path, info))
+        final_path = "%s%s.pth" % (model_save_path, info)
+        print("==========save model to: {}==========".format(final_path))
+        torch.save(self.state_dict(), final_path)
 
     def _load_model(self, load_path, info):
         """
             loading model
             好像optimizer也可以load，需要再确认一下
         """
+        final_path = "%s%s.pth" % (load_path, info)
+        print("==========load model from: {}==========".format(final_path))
         self.load_state_dict(
-            torch.load("%s%s.pth" % (load_path, info),
+            torch.load(final_path,
                        map_location=self.device)
         )
 
@@ -136,7 +162,7 @@ class BasicModel(nn.Module):
 
         return total_reg_loss
 
-    def getAllDistribution(self, step=0.2):
+    def getAllDistribution(self, d_num):
         userProfile = self.user_df
         userNum = len(userProfile)
         featureValueCounts = userProfile[self.groupFeature].value_counts()
@@ -154,21 +180,16 @@ class BasicModel(nn.Module):
         uniformDistribution = np.array(
             [1 / numFeature for _ in range(numFeature)])
 
-        t_value_list = np.arange(0, 1 + step, step)
+        t_value_list = np.linspace(0, 1, num=d_num)
         allDistribution = torch.empty(
             (userNum, len(t_value_list)), dtype=torch.int64)
         for i in range(len(t_value_list)):
             t = t_value_list[i]
-            if i == len(t_value_list) - 1:  # 原始分布
-                curUserFeature = userProfile[
-                    self.groupFeature
-                ].cat.codes.values.reshape((-1,))
-            else:
-                curDistribution = t * initDistribution + \
-                    (1 - t) * uniformDistribution
-                curUserFeature = np.random.choice(
-                    featureValueList, (userNum,), p=curDistribution
-                )
+            curDistribution = (1 - t) * initDistribution + \
+                t * uniformDistribution
+            curUserFeature = np.random.choice(
+                featureValueList, (userNum,), p=curDistribution
+            )
             allDistribution[:, i] = torch.LongTensor(curUserFeature.copy())
         return allDistribution, featureValueList
 
@@ -232,6 +253,11 @@ class BasicModel(nn.Module):
                 testDistribution[:, 2] = np.random.choice(
                     featureList, (userNum,), p=[0.9, 0.1]
                 )
+        elif self.dataset == 'rentTheRunWay':
+            testDistribution[:, 1] = np.random.choice(featureList, (userNum,), p=[
+                                                      0.1, 0.1, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08])
+            testDistribution[:, 2] = np.random.choice(featureList, (userNum,), p=[
+                                                      0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.1, 0.1])
         return torch.LongTensor(testDistribution), infoDict
 
     def init_sensitive_filter(self, filter_mode="combine"):
@@ -397,6 +423,7 @@ class BasicModel(nn.Module):
 
         best_epoch = -1
         best_auc = -1
+        best_CGF = float("inf")
         min_loss = float("inf")
 
         epoch_list = []
@@ -509,6 +536,9 @@ class BasicModel(nn.Module):
             OutPredict_loss_list.append(epoch_loss)
 
             curModelInfo = "epoch:{}".format(epoch + 1)
+            if config.CGF_mixup:
+                curModelInfo += " dNum_{} init_{}".format(
+                    self.d_num, config.initWeight)
 
             if config.use_MI:
                 first_MI, last_MI = self.minimizeMI(trainLoader, config)
@@ -583,7 +613,44 @@ class BasicModel(nn.Module):
             plt.savefig(config.MI_figure_save_path, dpi=400)
 
         # if not config.use_MI:
-        self._load_model(config.modelPath, "epoch:{}".format(best_epoch))
+        if config.CGF_mixup:
+            self._load_model(config.modelPath, "epoch:{} dNum_{} init_{}".format(
+                best_epoch, config.d_num, config.initWeight))
+        else:
+            self._load_model(config.modelPath, "epoch:{}".format(best_epoch))
+        self.eval()
+        self.running_mode = 'test'
+        final_auc = np.mean(self.evaluate(testLoader))
+
+        print("Final AUC: {}, At Epoch {}".format(final_auc, best_epoch))
+        self.getDPandEO(testLoader)
+
+    def test_model(self, testLoader, config):
+        best_epoch = -1
+        best_CGF = float("inf")
+        for epoch in range(1, 21):
+            if config.CGF_mixup:
+                self._load_model(config.modelPath, "epoch:{} dNum_{} init_{}".format(
+                    epoch, config.d_num, config.initWeight))
+            else:
+                self._load_model(config.modelPath, "epoch:{}".format(epoch))
+            self.eval()
+            self.running_mode = 'test'
+            final_auc = np.mean(self.evaluate(testLoader))
+
+            print("AUC: {}, At Epoch {}".format(final_auc, epoch))
+            CGF_DP_OUT_MCGF, CGF_EO_OUT_MCGF, CGF_DP_AUC_MCGF = self.getDPandEO(
+                testLoader
+            )
+            if CGF_DP_OUT_MCGF < best_CGF:
+                best_CGF = CGF_DP_OUT_MCGF
+                best_epoch = epoch
+
+        if config.CGF_mixup:
+            self._load_model(config.modelPath, "epoch:{} dNum_{} init_{}".format(
+                best_epoch, config.d_num, config.initWeight))
+        else:
+            self._load_model(config.modelPath, "epoch:{}".format(best_epoch))
         self.eval()
         self.running_mode = 'test'
         final_auc = np.mean(self.evaluate(testLoader))
@@ -663,7 +730,7 @@ class BasicModel(nn.Module):
 
         for t in range(numDistribution):
             curUserFeature = self.testDistribution[:, t]
-            tqdm_ = tqdm(iterable=dataloader, mininterval=1, ncols=120)
+            # tqdm_ = tqdm(iterable=dataloader, mininterval=1, ncols=120)
             out_dp_dict = {}
             out_eo_dict = {0: {}, 1: {}}
 
@@ -676,7 +743,7 @@ class BasicModel(nn.Module):
                 auc_dp_dict["true"][feature] = []
                 auc_dp_dict["pred"][feature] = []
 
-            for batch in tqdm_:
+            for batch in dataloader:
                 userID, userProfile, label, otherInfo = batch
                 tempUserFeature = curUserFeature[userID]
                 userProfile[:, self.featureIndex] = tempUserFeature.view((-1,))
@@ -813,7 +880,7 @@ class BasicModel(nn.Module):
                 )
         mi_data = pd.DataFrame({"MI": mi_est_values})
         mi_data.to_csv(config.base_model_dir + "MI_est.csv", index=False)
-        
+
         self.requires_grad_(True)
         self.mi_estimator.requires_grad_(False)
 
