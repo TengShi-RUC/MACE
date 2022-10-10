@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 from tqdm import tqdm
+import json
 
 
 def setup_seed(seed):
@@ -154,7 +155,85 @@ def process_insurance():
     np.save("data/insurance/interactMatrix.npy", interactMatrix)
 
 
-print("ml-1m")
-process_ml1m()
-print("insurance")
-process_insurance()
+def process_rentTheRunway():
+    datapath = "data/rentTheRunWay/renttherunway_final_data.json"
+    with open(datapath, "r") as f_in:
+        dataset_list = f_in.readlines()
+
+    print("total data size:{}".format(len(dataset_list)))
+    item_list = []
+    user_list = []
+    user_age_list = []
+    label_list = []
+    age_null_count = 0
+    rating_null_count = 0
+    for row_data in tqdm(dataset_list):
+        cur_data = json.loads(row_data)
+        rating = cur_data['rating']
+        if rating == None:
+            rating_null_count += 1
+            continue
+        try:
+            user_age = int(cur_data['age'])
+            user_age_list.append(user_age)
+        except:
+            age_null_count += 1
+            continue
+
+        label = 1 if rating == '10' else 0
+        label_list.append(label)
+        item_id = cur_data['item_id']
+        user_id = cur_data['user_id']
+        item_list.append(item_id)
+        user_list.append(user_id)
+
+    bins = pd.interval_range(start=0, end=120, freq=10, closed='left')
+    user_age_code = pd.cut(user_age_list, bins=bins).codes
+
+    user_num = len(np.unique(user_list))
+    item_num = len(np.unique(item_list))
+    rentData = pd.DataFrame(
+        {"user_id": user_list, "item_id": item_list, "age": user_age_code, "label": label_list})
+    rentData = rentData.astype(
+        {"user_id": "category", "item_id": "category", "age": "category", "label": "int"})
+    rentData['user_id'] = rentData['user_id'].cat.codes.values
+    rentData['item_id'] = rentData['item_id'].cat.codes.values
+    rentData['age'] = rentData['age'].cat.codes.values
+
+    print("age_null_count:{}".format(age_null_count))
+    print("rating_null_count:{}".format(rating_null_count))
+    print("not null data size:{} user_num:{} item_num:{} age_num:{}".format(
+        len(user_list), user_num, item_num, len(rentData['age'].unique())))
+
+    userProfile = rentData[['user_id', 'age']]
+    userProfile = userProfile.set_index("user_id")
+    userProfile.to_csv("data/rentTheRunWay/userProfile.csv")
+
+    maskArray = np.random.choice(
+        [False, True], size=(user_num, item_num), p=[0.1, 0.9])
+    interactTrainSet = []
+    interactTestSet = []
+    interactMatrix = np.zeros((user_num, item_num))
+    for cur_data in tqdm(rentData.itertuples()):
+        idx, user_id, item_id, age, label = cur_data
+        interactMatrix[user_id][item_id] = label
+        if maskArray[user_id][item_id]:
+            interactTrainSet.append([user_id, item_id, label])
+        else:
+            interactTestSet.append([user_id, item_id, label])
+    interactTrainMatrix = np.array(interactTrainSet)
+    interactTestMatrix = np.array(interactTestSet)
+    print("interactTrainSize: ", interactTrainMatrix.shape[0])
+    print("interactTestSize: ", interactTestMatrix.shape[0])
+    np.save("data/rentTheRunWay/interactTrain.npy", interactTrainMatrix)
+    np.save("data/rentTheRunWay/interactTest.npy", interactTestMatrix)
+    np.save("data/rentTheRunWay/interactMatrix.npy", interactMatrix)
+
+
+# print("ml-1m")
+# process_ml1m()
+# print("insurance")
+# process_insurance()
+
+print("rentTheRunWay")
+process_rentTheRunway()

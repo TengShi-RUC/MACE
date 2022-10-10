@@ -26,13 +26,15 @@ setup_seed(2021)
 parser = argparse.ArgumentParser()
 parser.add_argument("--train", action="store_true")
 parser.add_argument("--useSensitiveFeature", action="store_true")
-parser.add_argument("--algos", type=str, default="dmf_mixup(GF)_IV_MI")
+parser.add_argument("--algos", type=str, default="dmf_mixup(CGF)_IV_MI")
 parser.add_argument("--device", type=str, default="cuda:0")
-parser.add_argument("--groupFeature", type=str, default="occupation")
-parser.add_argument("--dataset", type=str, default="ml-1m")
+parser.add_argument("--groupFeature", type=str, default="age")
+parser.add_argument("--dataset", type=str, default="rentTheRunWay")
 parser.add_argument("--epochs", type=int, default=20)
-parser.add_argument("--fairWeight", type=float, default=5)
+parser.add_argument("--d_num", type=int, default=6)
+parser.add_argument("--fairWeight", type=float, default=1)
 parser.add_argument("--discriminatorWeight", type=float, default=10)
+parser.add_argument("--initWeight", type=float, default=0.6)
 
 parser.add_argument("--analysis", action="store_true")
 parser.add_argument("--train_h1", type=float, default=1)
@@ -43,6 +45,7 @@ args = parser.parse_args()
 
 # 调试用
 # args.train = True
+# args.useSensitiveFeature = True
 
 print()
 print(args)
@@ -165,6 +168,8 @@ if config.train:
         dataSetName=config.dataset,
     )
     model.fit(config, train_dataloader, test_dataloader)
+else:
+    model.test_model(test_dataloader, config)
 # else:
 #     model._load_model(config.modelPath, config.modelInfo)
 #     model.eval()

@@ -39,6 +39,10 @@ class BaseConfig:
         random_iv=False,
         direct_use_gexo=False
     ):
+        self.initWeight = args.initWeight
+
+        self.d_num = args.d_num
+
         self.analysis = args.analysis
         if args.analysis:
             self.train_h1 = args.train_h1
@@ -54,6 +58,10 @@ class BaseConfig:
         self.description = args.algos
 
         self.learning_rate = 0.001
+        if args.dataset == "rentTheRunWay" and (args.algos == "dmf_mixup(CGF)_IV_MI"):
+            self.learning_rate = 0.0001
+        if args.dataset == "rentTheRunWay" and (args.algos.startswith("deep")):
+            self.learning_rate = 0.0001
         self.interval = 100
         self.l2_penalty = 0.001
         self.earlyStop = 5
@@ -93,6 +101,12 @@ class BaseConfig:
                 "marital_status": 8,
                 "occupation": 6,
             }
+        elif self.dataset == "rentTheRunWay":
+            self.itemNum = 5846
+            self.userNum = 104873
+            self.sensitiveFeatureNum = 1
+            self.interactMatrix = "data/rentTheRunWay/interactMatrix.npy"
+            self.sensitiveFeatureClass = {"age": 12}
         else:
             raise ValueError("dataset error!")
 
