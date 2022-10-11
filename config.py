@@ -7,7 +7,6 @@ import os
 # DMF_trainDataPath = 'data/DMF_trainSet.npy'
 # DMF_testDataPath = 'data/DMF_testSet.npy'
 # DMF_embeddingPath = 'data/DMF_embedding.npy'
-# randomType 0(极端分布) 1(均匀分布)
 # groupFeature = 'occupation'
 # randomFeature = None
 # randomType = -1
@@ -69,16 +68,15 @@ class BaseConfig:
         self.test_batch_size = 128
 
         self.mixup_group_size = 32
-        self.GF_mixup = GF_mixup  # 只在原始数据Mixup
-        self.CGF_mixup = CGF_mixup  # 在多个分布上Mixup
+        self.GF_mixup = GF_mixup  
+        self.CGF_mixup = CGF_mixup  
         self.mixup_method = mixup_method
-        self.use_iv = use_iv  # 工具变量重构
+        self.use_iv = use_iv  
         self.ridge_lambd = 0.9
-        self.use_MI = use_MI  # 互信息优化
+        self.use_MI = use_MI  
         self.AdvLearning = AdvLearning
         self.Adv_discriminator_iter = 10
 
-        # 消融实验
         self.random_iv = random_iv
         self.direct_use_gexo = direct_use_gexo
 

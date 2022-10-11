@@ -43,7 +43,6 @@ parser.add_argument("--test_h1", type=float, default=1)
 parser.add_argument("--test_h2", type=float, default=0)
 args = parser.parse_args()
 
-# 调试用
 # args.train = True
 # args.useSensitiveFeature = True
 
