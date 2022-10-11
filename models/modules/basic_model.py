@@ -121,7 +121,6 @@ class BasicModel(nn.Module):
     def _load_model(self, load_path, info):
         """
             loading model
-            好像optimizer也可以load，需要再确认一下
         """
         final_path = "%s%s.pth" % (load_path, info)
         print("==========load model from: {}==========".format(final_path))
@@ -208,7 +207,7 @@ class BasicModel(nn.Module):
         testDistribution[:, 3] = userProfile[
             self.groupFeature
         ].cat.codes.values.reshape((-1,))
-        infoDict = {0: "均匀分布", 1: "极端分布1", 2: "极端分布2", 3: "原始分布"}
+        infoDict = {0: "uniform", 1: "extreme1", 2: "extreme2", 3: "init"}
 
         if self.dataset == "ml-1m":
             if self.groupFeature == "gender":
@@ -300,8 +299,8 @@ class BasicModel(nn.Module):
             return gexo
         gendo = self.Gendo(userEmbedding)  # (batch_size, d_endo)
         # solution = torch.lstsq(
-        #     gendo, gexo).solution[:gexo.size(1)]  # (d_exo, d_endo) 无法求导
-        # solution = gexo.pinverse(rcond=0).matmul(gendo)  rcond=0会导致nan
+        #     gendo, gexo).solution[:gexo.size(1)]  # (d_exo, d_endo) 
+        # solution = gexo.pinverse(rcond=0).matmul(gendo) 
         # solution = gexo.pinverse().matmul(gendo)  # (d_exo, d_endo)
         gexo_T = gexo.T
         XTX = gexo_T.matmul(gexo)
@@ -315,7 +314,6 @@ class BasicModel(nn.Module):
         g1 = torch.matmul(gexo, solution)  # (batch_size, d_endo)
         g2 = gendo - g1  # (batch_size, d_endo)
 
-        # print("=====残差矩阵最大值{}=====".format(torch.max(torch.abs(g2))))
 
         if self.analysis:
             if self.running_mode == 'train':
@@ -367,8 +365,6 @@ class BasicModel(nn.Module):
             sample_index = index_list[
                 torch.randint(0, len(index_list), (self.mixup_group_size,))
             ]
-
-            # 为了batchNorm操作 必须每次输入样本数>1
             # if mask.sum() <= 1:
             #     continue
             curUserProfile = userProfile[sample_index]
@@ -377,7 +373,7 @@ class BasicModel(nn.Module):
             batch_group_input.append((curUserID, curUserProfile, curOtherInfo))
         numGroups = len(batch_group_input)
 
-        if method == "mixup":  # 实现问题？
+        if method == "mixup": 
             final_loss = torch.tensor(0, dtype=torch.float, device=self.device)
             first = True
 
@@ -754,7 +750,6 @@ class BasicModel(nn.Module):
 
                 for i, feature in enumerate(self.featureValueList):
                     mask = userProfile[:, self.featureIndex] == feature
-                    # 为了batchNorm操作 必须每次输入样本数>1
                     if mask.sum() <= 1:
                         continue
                     curUserProfile = userProfile[mask]
