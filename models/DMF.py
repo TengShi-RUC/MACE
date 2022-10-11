@@ -23,7 +23,7 @@ class DeepMatrixFactorization(BasicModel):
         self.itemMLP = MLP(config.itemMLP)
 
         self.cos = nn.CosineSimilarity()
-        self.Sigmoid = nn.Sigmoid()  # sigmoid要不要加？
+        self.Sigmoid = nn.Sigmoid() 
 
         if self.use_iv:
             self.Gexo = MLP(config.Gexo)
@@ -52,7 +52,6 @@ class DeepMatrixFactorization(BasicModel):
             self.mi_estimator.requires_grad_(False)
 
         for m in self.children():
-            # embedding太大 GPU会out of memory
             # if isinstance(m, nn.Embedding):
             #     continue
             m.to(self.device)
