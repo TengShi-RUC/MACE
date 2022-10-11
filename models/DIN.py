@@ -20,7 +20,6 @@ class DeepInterestNetwork(BasicModel):
         self.itemEmbedding = nn.Embedding(
             config.itemNum + 1, config.itemEmbeddingSize, padding_idx=0
         )
-        # +1用于pad
 
         self.attention = AttentionSequencePoolingLayer(
             embedding_dim=config.itemEmbeddingSize
