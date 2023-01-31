@@ -92,6 +92,7 @@ class DeepInterestNetwork(BasicModel):
             targetItemEmbed, behaviorEmbedding, behaviorMask
         ).squeeze(1)
 
+        # 应该拼上userProfile(如果加上sensitiveFeature)
         if self.useSensitiveFeature:
             # (batch_size, itemEmbeddingSize+3)
             userEmbedding = torch.cat([userEmbedding, userProfile], dim=-1)
