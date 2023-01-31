@@ -1,4 +1,4 @@
-# Appendix: Experimental Details
+# Experimental Details
 These are the experimental settings for the paper "Model-Agnostic Causal Embedding Learning for Counterfactually Group-Fair Recommendation".
 
 ## Dataset Description
