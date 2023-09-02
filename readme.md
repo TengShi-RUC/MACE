@@ -20,8 +20,20 @@ We selected user's age as the sensitive attribute. We assigned users into 12 equ
 
 ### Implementation Details
 All the baselines and base models were trained on a single NVIDIA Tesla P100 GPU, with the batch size tuned among $\{64, 128, 256, 512, 1024\}$ and the learning rate tuned in $\{1\text{E-}1, 1\text{E-}2, 1\text{E-}3, 1\text{E-}4\}$.  
-In the implementation of MACE, we set the networks $g_{\mathrm{exo}}$, $g_{\mathrm{endo}}$, ${\mathrm{MLP}}_{1}$ and $\mathrm{MLP}_2$ to 3-layer fully connected neural networks respectively where the activation functions were $\mathrm{tanh}$ and $\mathrm{sigmoid}$. 
-The dimensions of the exogenous part $g_{\mathrm{exo}}  (\mathbf{v}_u)$ and the endogenous part $g_{\mathrm{endo}}  (\mathbf{v}_u)$ were set to $d_{\mathrm{exo}} = d_{\mathrm{exo}} = 32$, and the dimensions of the user and item embeddings were all set to $128$. 
+
+In the implementation of MACE, we set the networks $g_{\mathrm{exo}}$, $g_{\mathrm{endo}}$, 
+${\mathrm{MLP}}_{1}$ and 
+$\mathrm{MLP}_2$
+to 3-layer fully connected neural networks respectively where the activation functions were 
+$\mathrm{tanh}$ and $\mathrm{sigmoid}$. 
+
+The dimensions of the exogenous part 
+$g_{\mathrm{exo}}(\mathbf{v}_u)$ 
+and the endogenous part 
+$g_{\mathrm{endo}}(\mathbf{v}_u)$ 
+were set to 
+$d_{\mathrm{exo}} = d_{\mathrm{exo}} = 32$, 
+and the dimensions of the user and item embeddings were all set to $128$. 
 In the training process of MACE, the batch size $B$ and the maximum number of iteration $N$ were set to $128$ and $20\times \text{sample~size}/ 128$, respectively,  
 the update cycle $\rho$ was set according to the sample size of training data ensuring that the MI minimization was executed $20$ times, 
 the fair weight $\lambda$ in the final loss 
@@ -31,7 +43,6 @@ $$
 \sum_{ (\mathbf{s}_u, \mathbf{x}_u, \mathbf{v}_i, y_{u, i}) \in \mathcal{D}_{\mathrm{train}} }  
 \underbrace{\ell\left[~f (h_{\mathrm{re}}(\mathbf{v}_u), \mathbf{v}_i), y_{u, i} \right]}_{\text{Prediction Loss}} + 
 \underbrace{\lambda\cdot \mathrm{ECGF} (f, h_{\mathrm{re}}, \mathcal{T})}_{\text{CGF-Oriented Constraint}} +
-%\underbrace{\beta \mathrm{I} (g_{\mathrm{exo}}  (\mathbf{v}_u); \mathbf{s}_u) }_{\text{Exogeneity Construction}}+
 \gamma \| \bm{\theta}_{\mathrm{all}} \|_2^2, 
 $$
 
