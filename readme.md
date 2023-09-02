@@ -1,3 +1,7 @@
+# Model-Agnostic Causal Embedding Learning for Counterfactually Group-Fair Recommendation
+This is the official implementation of the paper "Model-Agnostic Causal Embedding Learning for
+Counterfactually Group-Fair Recommendation" based on PyTorch.
+
 # Experimental Details
 These are the experimental settings for the paper "Model-Agnostic Causal Embedding Learning for Counterfactually Group-Fair Recommendation".
 
