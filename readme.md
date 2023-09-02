@@ -27,12 +27,11 @@ $\mathrm{MLP}_2$
 to 3-layer fully connected neural networks respectively where the activation functions were 
 $\mathrm{tanh}$ and $\mathrm{sigmoid}$. 
 
-The dimensions of the exogenous part 
-$g_{\mathrm{exo}}(\mathbf{v}_u)$ 
+The dimensions of the exogenous part $g_{\mathrm{exo}}(\mathbf{v}_{u})$ 
 and the endogenous part 
 $g_{\mathrm{endo}}(\mathbf{v}_u)$ 
 were set to 
-$d_{\mathrm{exo}} = d_{\mathrm{exo}} = 32$, 
+$d_{\mathrm{exo}} = d_{\mathrm{exo}} = 32$,
 and the dimensions of the user and item embeddings were all set to $128$. 
 In the training process of MACE, the batch size $B$ and the maximum number of iteration $N$ were set to $128$ and $20\times \text{sample~size}/ 128$, respectively,  
 the update cycle $\rho$ was set according to the sample size of training data ensuring that the MI minimization was executed $20$ times, 
