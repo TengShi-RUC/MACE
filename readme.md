@@ -2,25 +2,25 @@
 This is the official implementation of the paper "Model-Agnostic Causal Embedding Learning for
 Counterfactually Group-Fair Recommendation" based on PyTorch.
 
-# Experimental Details
+## Experimental Details
 These are the experimental settings for the paper "Model-Agnostic Causal Embedding Learning for Counterfactually Group-Fair Recommendation".
 
-## Dataset Description
+### Dataset Description
 The experiments were conducted on the following publicly available recommendation benchmarks:
 
-[$\texttt{MovieLens-1M}$](https://grouplens.org/datasets/movielens/1m/): It contains 1,000,209 user-system interactions from 6,040 users on 3,952 movies. 
+[MovieLens-1M](https://grouplens.org/datasets/movielens/1m/): It contains 1,000,209 user-system interactions from 6,040 users on 3,952 movies. 
 We considered the user's occupation as the sensitive attribute, which contains 21 classes of occupations. For the user feedback, we treated the 5-star and 4-star ratings made by users as positive feedbacks (labeled with $1$), and others as negative feedbacks (labeled with $0$).
 For each user, we took the last interaction for model testing. 
 
-[$\texttt{Insurance}$](https://www.kaggle.com/mrmorj/insurance-recommendation): 
+[Insurance](https://www.kaggle.com/mrmorj/insurance-recommendation): 
 It is an insurance recommendation dataset on Kaggle, containing 5,382 interactions from 1,231 users on 21 insurances. We selected user's gender as the sensitive attribute that is a binary attribute, and split the dataset into a training set (80\%), a  validation set (10\%) and a testing set (10\%). 
 
-[$\texttt{RentTheRunWay}$](https://www.kaggle.com/datasets/rmisra/clothing-fit-dataset-for-size-recommendation): It contains 192,544 user-system interactions from 105,508 customers on 5,850 products, which were collected from a platform that allows women to rent clothes for various occasions. 
+[RentTheRunWay](https://www.kaggle.com/datasets/rmisra/clothing-fit-dataset-for-size-recommendation): It contains 192,544 user-system interactions from 105,508 customers on 5,850 products, which were collected from a platform that allows women to rent clothes for various occasions. 
 We selected user's age as the sensitive attribute. We assigned users into 12 equal-length groups according to the age range. We also split the dataset into a training set (80\%), a validation set (10\%) and a testing set (10\%). 
 
-## Implementation Details
+### Implementation Details
 All the baselines and base models were trained on a single NVIDIA Tesla P100 GPU, with the batch size tuned among $\{64, 128, 256, 512, 1024\}$ and the learning rate tuned in $\{1\text{E-}1, 1\text{E-}2, 1\text{E-}3, 1\text{E-}4\}$.  
-In the implementation of MACE, we set the networks $g_{\mathrm{exo}},$ $g_{\mathrm{endo}}$, $\mathrm{MLP}_1$ and $\mathrm{MLP}_2$ to 3-layer  fully connected neural networks respectively where the activation functions were $\mathrm{tanh}$ and $\mathrm{sigmoid}$. 
+In the implementation of MACE, we set the networks $g_{\mathrm{exo}},$ $g_{\mathrm{endo}},$ $\mathrm{MLP}_1$ and $\mathrm{MLP}_2$ to 3-layer  fully connected neural networks respectively where the activation functions were $\mathrm{tanh}$ and $\mathrm{sigmoid}$. 
 The dimensions of the exogenous part $g_{\mathrm{exo}}  (\mathbf{v}_u)$ and the endogenous part $g_{\mathrm{endo}}  (\mathbf{v}_u)$ were set to $d_{\mathrm{exo}} = d_{\mathrm{exo}} = 32$, and the dimensions of the user and item embeddings were all set to $128$. 
 In the training process of MACE, the batch size $B$ and the maximum number of iteration $N$ were set to $128$ and $20\times \text{sample~size}/ 128$, respectively,  
 the update cycle $\rho$ was set according to the sample size of training data ensuring that the MI minimization was executed $20$ times, 
