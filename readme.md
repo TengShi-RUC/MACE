@@ -3,4 +3,4 @@ This is the official implementation of the paper "Model-Agnostic Causal Embeddin
 Counterfactually Group-Fair Recommendation" based on PyTorch.
 
 ## Experimental Details
-The experimental settings can be founde in the file `Appendix_Experimental_Settings.pdf`. 
+The experimental settings can be found in the file `Appendix_Experimental_Settings.pdf`. 
